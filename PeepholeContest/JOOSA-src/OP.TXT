@@ -1,0 +1,9 @@
+1)+, -, /, * -> * -1
+2) %, 5 % 0
+2)iinc -> local + constant
+3)pop constant before pop
+7) istore then iload, iload istore,
+8) if stmt never reached...
+9) useless goto
+10) Label Counting
+11) Remove useless compares
