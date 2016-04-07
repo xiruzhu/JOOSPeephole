@@ -258,19 +258,88 @@ int simplify_load_store(CODE **c){
 	return 0;
 }
 
-int simplify_field(CODE ** c){
-  /*
-  char ** arg0;
-  char ** arg1;
-  if(is_getfield(*c, arg0) && is_putfield(next(*c), arg1)){
-    for(char * i = arg1[0]; i != NULL; i = i + sizeof(char *)){
+/*
+* aload x
+* getfield z1 z2-> has to have an object reference in stack
+* store y1
+* aload x
+* getfield z1 z2
+* store y2
+* ->
+* aload x
+* getfield z1 z2 -> has to have an object reference in stack
+* dup
+* store y1
+* store y2
+*/
 
+int simplify_fields_get(CODE ** c){
+  int x,y,w,z;
+  char ** arg0 = NULL;
+  char ** arg1 = NULL;
+  if(is_aload(*c, &x) && is_getfield(next(*c), arg0) && is_aload(next(next(next(*c))), &y) && is_getfield(next(next(next(next(*c)))), arg1)){
+    if(x == y && strcmp(*arg0, *arg1) == 0){
+      if(is_astore(next(next(*c)), &w) && is_astore(next(next(next(next(next(*c))))), &z)){
+        if(w == z)
+          return replace(c, 6, makeCODEaload(x,
+                               makeCODEgetfield(*arg0,
+                               makeCODEdup(
+                               makeCODEastore(w,
+                               makeCODEastore(z, NULL))))));
+      }else if(is_istore(next(next(*c)), &w) && is_istore(next(next(next(next(next(*c))))), &z)){
+        if(w == z)
+          return replace(c, 6, makeCODEaload(x,
+                               makeCODEgetfield(*arg0,
+                               makeCODEdup(
+                               makeCODEistore(w,
+                               makeCODEistore(z, NULL))))));
+      }
     }
-  }else if(is_putfield(*c, arg0) && is_getfield(next(*c), arg1)){
-
-  }*/
+  }
   return 0;
 }
+/*
+* aload x
+* aload/iload y
+* putfield z1 z2-> has to have an object reference in stack
+* aload x
+* aload/iload y
+* putfield z1 z2-> has to have an object reference in stack
+* ->
+* aload x
+* aload/iload y
+* putfield z1 z2-> has to have an object reference in stack
+*/
+int simplify_fields_put(CODE ** c){
+  //TO DO
+  return 0;
+}
+
+/*
+aconst_null
+ifnonnull x z
+
+->
+
+nothing... it won't work!
+*/
+int simplify_ifnonnull(CODE ** c){
+  int x;
+  if(is_aconst_null(*c) && is_ifnonnull(next(*c), &x)){
+    return replace(c, 2, NULL);
+  }
+  return 0;
+}
+
+/* idc/iload/aload x
+* idc/iload/aload y
+* if_icmne/if_acmne w z
+*
+* ->
+* goto w z
+* Same for lt,gt,le,ge ... since they are all constants
+*/
+
 
 /* goto L1
  * ...
@@ -301,6 +370,11 @@ int simplify_nop(CODE **c){
     return replace_modified(c, 1, NULL);
 	}
 	return 0;
+}
+
+int simplify_dup(CODE ** c){
+
+  return 0;
 }
 
 #define OPTS 4
