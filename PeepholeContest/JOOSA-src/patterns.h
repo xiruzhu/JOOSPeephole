@@ -113,19 +113,36 @@ int simplify_astore(CODE **c)
   return 0;
 }
 
-int simplify_primitive_operation(CODE * c){
-  int x;
-  if(is_ldc_int(){
-
+int simplify_primitive_operation(CODE ** c){
+  int x, y;
+  if(is_iadd(next(next(*c))) && is_ldc_int(*c, &x) && is_iload(next(*c), &y)){
+    //Go in
+      if(x == 0)
+        return replace(c, 3, makeCODEiload(y, NULL));
+  }else if(is_imul(next(next(*c))) && is_ldc_int(*c, &x) && is_iload(next(*c), &y)){
+      if(x == 1)
+        return replace(c, 3, makeCODEiload(y, NULL));
+      else if(x == 0)
+        return replace(c, 3, makeCODEldc_int(0, NULL));
+  }else if(is_isub(next(next(*c))) && is_ldc_int(*c, &x) && is_iload(next(*c), &y)){
+      if(x == 0)
+        return replace(c, 3, makeCODEiload(y, makeCODEineg(NULL)));
+  }else if(is_idiv(next(next(*c))) && is_ldc_int(*c, &x) && is_iload(next(*c), &y)){
+      if(x == 1)
+        return replace(c, 3, makeCODEiload(y, makeCODEineg(NULL)));
+  }else if(is_irem(next(next(*c))) && is_ldc_int(*c, &x) && is_iload(next(*c), &y)){
+      if(x == 1)
+        return replace(c, 3, makeCODEiload(y, makeCODEineg(NULL)));
   }else if(is_ldc_int(*c, &x)){
-    if(is_iadd(next(*c), &x) || is_isub(next(*c), &x)){
+    if(is_iadd(next(*c)) || is_isub(next(*c))){
       if(x == 0)
         return replace(c, 2, NULL);
-    }else if(is_imul(next(*c), &x) || is_idiv(next(*c), &x) || is_imod(next(*c), &x)){
+    }else if(is_imul(next(*c)) || is_idiv(next(*c)) || is_irem(next(*c))){
       if(x == 1)
         return replace(c, 2, makeCODEldc_int(x, NULL));
     }
   }
+  return 0;
 }
 
 /*
@@ -138,10 +155,10 @@ int simplify_primitive_operation(CODE * c){
 * ldc x+y
 * iadd
 */
-int simplify_const_chain_ops(CODE * c){
+int simplify_const_chain_ops(CODE ** c){
   int x;
   int y;
-  if(is_ldc_int(*c, &x) && is_ldc_int(next(next(*c)), &x)){
+  if(is_ldc_int(*c, &x) && is_ldc_int(next(next(*c)), &y)){
     if(is_iadd(next(*c)) && is_iadd(next(next(next(*c))))){
       return replace(c, 2, makeCODEldc_int(x + y, makeCODEiadd(NULL)));
     }else if(is_isub(next(*c)) && is_isub(next(next(next(*c))))){
@@ -183,7 +200,7 @@ int positive_increment(CODE **c)
   }else if(is_ldc_int(*c,&k) &&
       is_iload(next(*c),&x)  &&
       is_iadd(next(next(*c))) &&
-      is_istore(next(next(next(*c))),&y){
+      is_istore(next(next(next(*c))),&y)){
      return replace(c,4,makeCODEiinc(x,k,NULL));
   }
   return 0;
@@ -202,7 +219,7 @@ int simplify_swap(CODE **c){
 }
 
 int simplify_pop(CODE **c){
-	char ** temp;
+	char ** temp = NULL;
   int x;
 	if((is_iload(*c,&x)       ||
 		is_aload(*c,&x)         ||
@@ -242,6 +259,7 @@ int simplify_load_store(CODE **c){
 }
 
 int simplify_field(CODE ** c){
+  /*
   char ** arg0;
   char ** arg1;
   if(is_getfield(*c, arg0) && is_putfield(next(*c), arg1)){
@@ -250,7 +268,8 @@ int simplify_field(CODE ** c){
     }
   }else if(is_putfield(*c, arg0) && is_getfield(next(*c), arg1)){
 
-  }
+  }*/
+  return 0;
 }
 
 /* goto L1
