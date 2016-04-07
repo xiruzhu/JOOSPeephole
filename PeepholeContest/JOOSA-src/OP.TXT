@@ -7,3 +7,103 @@
 9) useless goto
 10) Label Counting
 11) Remove useless compares
+
+/*
+* aload x y
+* getfield
+* aload x y
+* getfield
+*
+* ->
+* aload x
+* getfield
+* dup
+* When x, y are the same value
+* So here, we can use dup instead saving 2 instructions
+*
+*
+* aload x
+* instanceof
+* aload x
+* instanceof
+*
+* ->
+* aload x
+* instanceof
+* dup
+*
+* This would be the case for all elementary operations like +,-,*,/,%
+* iload x /idc x
+* iload y /idc y
+* iadd
+* iload x /idc x
+* iload y /idc y
+* iadd
+*
+* ->
+* idc x/iload x
+* idciload y
+* iadd
+* dup
+*
+* The dup chain just keep on coming
+* iload x/ldc x
+* ineg
+* iload x/ldc x
+* ineg
+*
+* ->
+*
+* idc/iload x
+* ineg
+* dup
+*
+* If loops optimizations, eq, ne
+* idc 0
+* ifeq w z
+*
+* ->
+* goto w z
+*
+* idc/iload/aload x
+* idc/iload/aload x
+* if_icmpeq/if_acmpeq w z
+*
+* ->
+* goto w z
+*
+* idc/iload/aload x
+* idc/iload/aload y
+* if_icmne/if_acmne w z
+*
+* ->
+* goto w z
+*
+* Same for lt,gt,le,ge ... since they are all constants
+*
+*/
+
+aload x
+checkcast
+aload x
+checkcast
+
+->
+
+aload x
+checkcast
+dup
+
+aconst_null
+ifnull w z
+
+->
+
+goto w z
+
+aconst_null
+ifnonnull x z
+
+->
+
+nothing... it won't work!
