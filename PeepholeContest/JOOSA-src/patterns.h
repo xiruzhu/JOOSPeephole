@@ -318,9 +318,7 @@ int simplify_fields_put(CODE ** c){
 /*
 aconst_null
 ifnonnull x z
-
 ->
-
 nothing... it won't work!
 */
 int simplify_ifnonnull(CODE ** c){
